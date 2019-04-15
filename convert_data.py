@@ -3,38 +3,24 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import torch
-from torch.jit import script, trace
-import torch.nn as nn
-from torch import optim
-import torch.nn.functional as F
-import csv
-import random
-import re
-import os
-import unicodedata
 import codecs
+import csv
+import os
 from io import open
-import itertools
-import math
-
+import torch
+import fire
 
 USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
 
-corpus_dir = "../data/cornell_movie_dialogs_corpus"
-corpus_file = os.path.join(corpus_dir, "movie_lines.txt")
 
-conversations_corpus_file = os.path.join(corpus_dir, "movie_conversations.txt")
 
 def print_lines(file, n=10):
     with open(file, 'rb') as file_reader:
         lines = file_reader.readlines()
     for line in lines:
         print(line)
-
-print_lines(corpus_file)
 
 
 def load_lines(filename, fields):
@@ -84,32 +70,45 @@ def extract_sentence_pairs(conversations):
     return qa_pairs
 
 
-# Define path to new file
-datafile = os.path.join(corpus_dir, "formatted_movie_lines.txt")
+def prepare_data(corpus_dir, corpus_file, conversations_corpus_file):
 
-delimiter = '\t'
-# Unescape the delimiter
-delimiter = str(codecs.decode(delimiter, "unicode_escape"))
+    corpus_file = os.path.join(corpus_dir, corpus_file)
+    conversations_corpus_file = os.path.join(corpus_dir, conversations_corpus_file)
+    # Define path to new file
+    datafile = os.path.join(corpus_dir, "formatted_movie_lines.txt")
 
-# Initialize lines dict, conversations list, and field ids
-lines = {}
-conversations = []
-MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
-MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
+    delimiter = '\t'
+    # Unescape the delimiter
+    delimiter = str(codecs.decode(delimiter, "unicode_escape"))
 
-# Load lines and process conversations
-print("\nProcessing corpus...")
-lines = load_lines(corpus_file, MOVIE_LINES_FIELDS)
+    # Initialize lines dict, conversations list, and field ids
+    lines = {}
+    conversations = []
+    MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
+    MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
 
-print("\nLoading conversations...")
-conversations = load_conversations(conversations_corpus_file,
-                                  lines, MOVIE_CONVERSATIONS_FIELDS)
+    # Load lines and process conversations
+    print("\nProcessing corpus...")
+    lines = load_lines(corpus_file, MOVIE_LINES_FIELDS)
 
-# Write new csv file
-print("\nWriting newly formatted file...")
-with open(datafile, 'w', encoding='utf-8') as outputfile:
-    writer = csv.writer(outputfile, delimiter=delimiter, lineterminator='\n')
-    for pair in extract_sentence_pairs(conversations):
-        writer.writerow(pair)
+    print("\nLoading conversations...")
+    conversations = load_conversations(conversations_corpus_file,
+                                       lines, MOVIE_CONVERSATIONS_FIELDS)
 
-print_lines(datafile)
+    # Write new csv file
+    print("\nWriting newly formatted file...")
+    with open(datafile, 'w', encoding='utf-8') as outputfile:
+        writer = csv.writer(outputfile, delimiter=delimiter, lineterminator='\n')
+        for pair in extract_sentence_pairs(conversations):
+            writer.writerow(pair)
+
+    print_lines(datafile)
+
+
+if __name__ == "__main__":
+    fire.Fire()
+    # corpus_dir = "cornell_movie_dialogs_corpus"
+    # corpus_file = "movie_lines.txt"
+    # conversations_corpus_file = "movie_conversations.txt"
+    #
+    # prepare_data(corpus_dir, corpus_file, conversations_corpus_file)

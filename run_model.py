@@ -33,12 +33,12 @@ def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
         checkpoint = torch.load(load_filename)
         # if loading a model trained on gpu to cpu
         # checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
-        encoder_sd = checkpoint["enc"]
-        decoder_sd = checkpoint["dec"]
+        encoder_sd = checkpoint["en"]
+        decoder_sd = checkpoint["de"]
         encoder_optimizer_sd = checkpoint["en_opt"]
         decoder_optimizer_sd = checkpoint["de_opt"]
         embedding_sd = checkpoint["embedding"]
-        vocab.__dict__ = checkpoint["vocab_dict"]
+        vocab.__dict__ = checkpoint["voc_dict"]
 
     print("Building encoder and decoder ...")
     # initialize word embeddings
@@ -73,7 +73,7 @@ def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
 
     # run training iterations
     training_iters(config, vocab, pairs, encoder, decoder, encoder_optimizer,
-                   decoder_optimizer, embedding, save_dir)
+                   decoder_optimizer, embedding, save_dir, load_filename)
 
 
 if __name__ == "__main__":

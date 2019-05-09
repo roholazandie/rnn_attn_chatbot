@@ -102,6 +102,7 @@ def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
     start_iteration = 1
     print_loss = 0
     if load_filename:
+        checkpoint = torch.load(load_filename)
         start_iteration = checkpoint["iteration"] + 1
 
     # training loop

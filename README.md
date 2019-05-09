@@ -9,7 +9,7 @@ Extract and put it in a directory named "cornell_movie_dialogs_corpus" besides t
 
 ### prepare data
 ```
-python prepare_data --corpus-dir cornell_movie_dialogs_corpus --corpus-file movie_lines.txt --conversations-corpus-file movie_conversations.txt
+python convert_data.py prepare_data --corpus-dir cornell_movie_dialogs_corpus --corpus-file movie_lines.txt --conversations-corpus-file movie_conversations.txt
 ```
 
 ## How to run?

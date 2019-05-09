@@ -1,6 +1,11 @@
 import torch
 import random
 import os
+
+
+
+
+from cornell_movie_dialog_dataset import CornellMovieDialogDataset
 from prepare_data import PrepareDataForModel
 
 #MAX_LENGTH = 10
@@ -150,6 +155,60 @@ def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
 
 
 
+
+def training_iters1(data_loader, config, voc, encoder, decoder, encoder_optimizer,
+                   decoder_optimizer, embedding, save_dir, load_filename):
+
+
+    #initializing
+    print("Initializing ...")
+    start_iteration = 1
+    print_loss = 0
+    if load_filename:
+        checkpoint = torch.load(load_filename)
+        start_iteration = checkpoint["iteration"] + 1
+
+    # training loop
+    for iteration, training_batch in enumerate(data_loader):
+        # extract fields from batch
+        input_variable, lengths, target_variable, mask, max_target_length = training_batch
+
+        #run a training iteration
+        loss = train(config,
+                     input_variable,
+                     lengths,
+                     target_variable,
+                     mask, max_target_length,
+                     encoder, decoder, embedding,
+                     encoder_optimizer, decoder_optimizer, save_dir)
+
+        print_loss += loss
+
+        # print progress
+        if iteration % config.print_every == 0:
+            print_loss_avg = print_loss / config.print_every
+            print("Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(iteration,
+                                                                                          iteration / config.n_iterations * 100,
+                                                                                          print_loss_avg))
+            print_loss = 0
+
+        # save checkpoints
+        if iteration % config.save_every == 0:
+            directory = os.path.join(save_dir, config.model_name, config.corpus_name, '{}-{}_{}'.format(config.encoder_n_layers,
+                                                                                          config.decoder_n_layers,
+                                                                                          config.hidden_size))
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+
+            torch.save({"iteration": iteration,
+                        "en": encoder.state_dict(),
+                        "de": decoder.state_dict(),
+                        "en_opt": encoder_optimizer.state_dict(),
+                        "de_opt": decoder_optimizer.state_dict(),
+                        "loss": loss,
+                        "voc_dict": voc.__dict__,
+                        "embedding": embedding.state_dict()},
+                       os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
 
 
 

@@ -14,8 +14,6 @@ USE_CUDA = torch.cuda.is_available()
 device = torch.device("cuda" if USE_CUDA else "cpu")
 
 
-
-
 def print_lines(file, n=10):
     with open(file, 'rb') as file_reader:
         lines = file_reader.readlines()
@@ -107,8 +105,3 @@ def prepare_data(corpus_dir, corpus_file, conversations_corpus_file):
 
 if __name__ == "__main__":
     fire.Fire()
-    # corpus_dir = "cornell_movie_dialogs_corpus"
-    # corpus_file = "movie_lines.txt"
-    # conversations_corpus_file = "movie_conversations.txt"
-    #
-    # prepare_data(corpus_dir, corpus_file, conversations_corpus_file)

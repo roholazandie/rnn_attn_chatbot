@@ -25,8 +25,8 @@ class LuongAttnDecoderRNN(nn.Module):
 
         self.attention = Attention(attention_model, hidden_size)
 
-    def forward(self, inuput_step, last_hidden, encoder_outputs):
-        embedded = self.embedding(inuput_step)
+    def forward(self, input_step, last_hidden, encoder_outputs):
+        embedded = self.embedding(input_step)
         embedded = self.embedding_droput(embedded)
         # forward through unidirectional GRU
         rnn_output, hidden = self.gru(embedded, last_hidden)

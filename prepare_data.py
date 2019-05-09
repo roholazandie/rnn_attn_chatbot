@@ -11,6 +11,8 @@ import unicodedata
 from io import open
 import torch
 import random
+
+from text import SpacySentenceTokenizer
 from vocab import Vocabulary
 
 MAX_LENGTH = 10  # maximum sentence length to consider
@@ -20,6 +22,7 @@ MIN_COUNT = 3
 PAD_token = 0  # Used for padding short sentences
 SOS_token = 1  # Start-of-sentence token
 EOS_token = 2  # End-of-sentence token
+
 
 class PrepareData():
 
@@ -46,6 +49,24 @@ class PrepareData():
         vocab = Vocabulary(corpus_name)
 
         return vocab, pairs
+
+    def read_pairs(self, datafile):
+        tokenizer = SpacySentenceTokenizer()
+        lines = open(datafile, encoding="utf-8").read().strip().split('\n')
+        #pairs = [[self.normalize_string(s) for s in line.split('\t')] for line in lines]
+        pairs = []
+        i = 0
+        for line in lines:
+            chats = line.split('\t')
+            #todo nomalize text
+            sentences0 = chats[0]#tokenizer.tokenize(chats[0])
+            sentences1 = chats[1]#tokenizer.tokenize(chats[1])
+            pairs.append((sentences0, sentences1))
+            # i+=1
+            # if i>10:
+            #     break
+
+        return pairs
 
     # Returns True iff both sentences in a pair 'p' are under the MAX_LENGTH threshold
     def filter_pair(self, p):
@@ -94,6 +115,7 @@ class PrepareData():
         pairs = self.trim_rare_words(vocab, pairs)
 
         return vocab, pairs
+
 
 
 class PrepareDataForModel():

@@ -3,10 +3,13 @@ from torch import nn, optim
 import os
 
 from config import Config
+from cornell_movie_dialog_dataset import CornellMovieDialogDataset
 from encoder_rnn import EncoderRNN
 from luong_attnention_decoder_rnn import LuongAttnDecoderRNN
 from prepare_data import PrepareData
-from training import training_iters
+from training import training_iters, training_iters1
+from torch.utils.data import Dataset, DataLoader
+from text import BPEVocab
 import fire
 
 
@@ -73,6 +76,72 @@ def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
 
     # run training iterations
     training_iters(config, vocab, pairs, encoder, decoder, encoder_optimizer,
+                   decoder_optimizer, embedding, save_dir, load_filename)
+
+
+
+
+
+def run_training1(corpus_dir, save_dir, datafile, config_file, load_filename=""):
+    # read data
+    config = Config.from_json_file(config_file)
+    # prepare_data = PrepareData(min_count=config.MIN_COUNT, max_length=config.MAX_LENGTH)
+    # vocab, pairs = prepare_data.load_prepare_data(corpus_dir, datafile, save_dir)
+
+    if load_filename:
+        # if loading on the same machine the model trained on
+        checkpoint = torch.load(load_filename)
+        # if loading a model trained on gpu to cpu
+        # checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
+        encoder_sd = checkpoint["en"]
+        decoder_sd = checkpoint["de"]
+        encoder_optimizer_sd = checkpoint["en_opt"]
+        decoder_optimizer_sd = checkpoint["de_opt"]
+        embedding_sd = checkpoint["embedding"]
+        vocab.__dict__ = checkpoint["voc_dict"]
+
+
+    bpe_vocab_path = '/home/rohola/codes/transformer_chatbot/parameters/bpe.vocab'
+    bpe_codes_path = '/home/rohola/codes/transformer_chatbot/parameters/bpe.code'
+    vocab = BPEVocab.from_files(bpe_vocab_path, bpe_codes_path)
+    dataset = CornellMovieDialogDataset(paths=[], vocab=vocab, max_lengths=0)
+    data_loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=True, collate_fn=dataset.collate_func)
+
+    num_tokens = len(vocab)
+
+    print("Building encoder and decoder ...")
+    # initialize word embeddings
+    embedding = nn.Embedding(num_tokens, config.hidden_size)
+    if load_filename:
+        embedding.load_state_dict(embedding_sd)
+
+    # initialize encoder and decoder models
+    encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout)
+    decoder = LuongAttnDecoderRNN(config.attn_model, embedding, config.hidden_size,
+                                  num_tokens, config.decoder_n_layers, config.dropout)
+
+    if load_filename:
+        encoder.load_state_dict(encoder_sd)
+        decoder.load_state_dict(decoder_sd)
+
+    print("Models built and ready to go.")
+
+    #####################################
+    # ensure dropout layers are in train mode
+    encoder.train()
+    decoder.train()
+
+    # initilize optimizers
+    print("building optimizers")
+    encoder_optimizer = optim.Adam(encoder.parameters(), lr=config.learning_rate)
+    decoder_optimizer = optim.Adam(decoder.parameters(), lr=config.learning_rate * config.decoder_learning_ratio)
+
+    if load_filename:
+        encoder_optimizer.load_state_dict(encoder_optimizer_sd)
+        decoder_optimizer.load_state_dict(decoder_optimizer_sd)
+
+    # run training iterations
+    training_iters1(data_loader, config, vocab, encoder, decoder, encoder_optimizer,
                    decoder_optimizer, embedding, save_dir, load_filename)
 
 

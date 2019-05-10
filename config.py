@@ -18,14 +18,14 @@ class Config(object):
                  learning_rate=0.0001,
                  decoder_learning_ratio=5.0,
                  n_iterations=4000,
+                 n_epochs=10,
                  print_every=1,
                  save_every=500,
                  corpus_name="",
+                 bpe_codes_path="",
+                 bpe_vocab_path="",
                  MAX_LENGTH=10,
                  MIN_COUNT=3,
-                 PAD_token=0,
-                 SOS_token=1,
-                 EOS_token=2,
                  device="cpu"
                  ):
         self.hidden_size = hidden_size
@@ -42,14 +42,14 @@ class Config(object):
         self.learning_rate = learning_rate
         self.decoder_learning_ratio = decoder_learning_ratio
         self.n_iterations = n_iterations
+        self.n_epochs = n_epochs
         self.print_every = print_every
         self.save_every = save_every
         self.corpus_name = corpus_name
+        self.bpe_codes_path = bpe_codes_path
+        self.bpe_vocab_path = bpe_vocab_path
         self.MAX_LENGTH = MAX_LENGTH
         self.MIN_COUNT = MIN_COUNT
-        self.PAD_token = PAD_token
-        self.SOS_token = SOS_token
-        self.EOS_token = EOS_token
         self.device = device
 
     @classmethod

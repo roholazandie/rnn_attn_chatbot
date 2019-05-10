@@ -45,14 +45,14 @@ def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
 
     print("Building encoder and decoder ...")
     # initialize word embeddings
-    embedding = nn.Embedding(vocab.num_words, config.hidden_size)
+    embedding = nn.Embedding(vocab.num_words, config.hidden_size).to(config.device)
     if load_filename:
         embedding.load_state_dict(embedding_sd)
 
     # initialize encoder and decoder models
-    encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout)
+    encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout).to(config.device)
     decoder = LuongAttnDecoderRNN(config.attn_model, embedding, config.hidden_size,
-                                  vocab.num_words, config.decoder_n_layers, config.dropout)
+                                  vocab.num_words, config.decoder_n_layers, config.dropout).to(config.device)
 
     if load_filename:
         encoder.load_state_dict(encoder_sd)
@@ -101,24 +101,25 @@ def run_training1(corpus_dir, save_dir, datafile, config_file, load_filename="")
         vocab.__dict__ = checkpoint["voc_dict"]
 
 
-    bpe_vocab_path = '/home/rohola/codes/transformer_chatbot/parameters/bpe.vocab'
-    bpe_codes_path = '/home/rohola/codes/transformer_chatbot/parameters/bpe.code'
-    vocab = BPEVocab.from_files(bpe_vocab_path, bpe_codes_path)
-    dataset = CornellMovieDialogDataset(paths=[], vocab=vocab, max_lengths=0)
+    vocab = BPEVocab.from_files(config.bpe_vocab_path, config.bpe_codes_path)
+
+    #datafile = "/home/rohola/codes/rnn_attn_chatbot/cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
+
+    dataset = CornellMovieDialogDataset(config, paths=[datafile], vocab=vocab, max_lengths=0)
     data_loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=True, collate_fn=dataset.collate_func)
 
     num_tokens = len(vocab)
 
     print("Building encoder and decoder ...")
     # initialize word embeddings
-    embedding = nn.Embedding(num_tokens, config.hidden_size)
+    embedding = nn.Embedding(num_tokens, config.hidden_size).to(config.device)
     if load_filename:
         embedding.load_state_dict(embedding_sd)
 
     # initialize encoder and decoder models
-    encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout)
+    encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout).to(config.device)
     decoder = LuongAttnDecoderRNN(config.attn_model, embedding, config.hidden_size,
-                                  num_tokens, config.decoder_n_layers, config.dropout)
+                                  num_tokens, config.decoder_n_layers, config.dropout).to(config.device)
 
     if load_filename:
         encoder.load_state_dict(encoder_sd)
@@ -140,9 +141,9 @@ def run_training1(corpus_dir, save_dir, datafile, config_file, load_filename="")
         encoder_optimizer.load_state_dict(encoder_optimizer_sd)
         decoder_optimizer.load_state_dict(decoder_optimizer_sd)
 
-    # run training iterations
+    #for epoch in range(config.n_epochs):
     training_iters1(data_loader, config, vocab, encoder, decoder, encoder_optimizer,
-                   decoder_optimizer, embedding, save_dir, load_filename)
+                   decoder_optimizer, embedding, save_dir, load_filename, epoch=1)
 
 
 if __name__ == "__main__":

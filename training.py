@@ -1,10 +1,6 @@
 import torch
 import random
 import os
-
-
-
-
 from cornell_movie_dialog_dataset import CornellMovieDialogDataset
 from prepare_data import PrepareDataForModel
 
@@ -16,12 +12,11 @@ def masked_NLL_loss(inp, target, mask):
     n_total = mask.sum()
     cross_entropy = -torch.log(torch.gather(inp, 1, target.view(-1, 1)).squeeze(1))
     loss = cross_entropy.masked_select(mask).mean()
-    #loss = loss.to(device)
     return loss, n_total.item()
 
 
-def train(config, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
-          encoder_optimizer, decoder_optimizer, save_dir):
+def train(config, bos_id, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
+          encoder_optimizer, decoder_optimizer):
 
     # zeros gradients
     encoder_optimizer.zero_grad()
@@ -42,7 +37,7 @@ def train(config, input_variable, lengths, target_variable, mask, max_target_len
     encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
 
     #create initial decoder inputs
-    decoder_input = torch.LongTensor([config.SOS_token for _ in range(config.batch_size)])
+    decoder_input = torch.LongTensor([bos_id for _ in range(config.batch_size)])
     decoder_input = decoder_input.unsqueeze(0)
     decoder_input = decoder_input.to(config.device)
 
@@ -93,6 +88,38 @@ def train(config, input_variable, lengths, target_variable, mask, max_target_len
     return sum(print_losses)/n_totals
 
 
+
+
+def train1(config, bos_id, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
+          encoder_optimizer, decoder_optimizer):
+
+    # zeros gradients
+    encoder_optimizer.zero_grad()
+    decoder_optimizer.zero_grad()
+
+
+    # initialize variables
+    loss = 0
+    print_losses = []
+    n_totals = 0
+
+
+
+
+    # perform backprob
+    loss.backward()
+
+    # clip gradients: gradients are clipped in place
+    torch.nn.utils.clip_grad_norm_(encoder.parameters(), config.clip)
+    torch.nn.utils.clip_grad_norm_(decoder.parameters(), config.clip)
+
+    # adjust model weights
+    encoder_optimizer.step()
+    decoder_optimizer.step()
+
+    return sum(print_losses)/n_totals
+
+
 def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
                    decoder_optimizer, embedding, save_dir, load_filename):
 
@@ -118,12 +145,13 @@ def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
 
         #run a training iteration
         loss = train(config,
+                     voc.bos_id,
                      input_variable,
                      lengths,
                      target_variable,
                      mask, max_target_length,
                      encoder, decoder, embedding,
-                     encoder_optimizer, decoder_optimizer, save_dir)
+                     encoder_optimizer, decoder_optimizer)
 
         print_loss += loss
 
@@ -155,11 +183,8 @@ def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
 
 
 
-
 def training_iters1(data_loader, config, voc, encoder, decoder, encoder_optimizer,
-                   decoder_optimizer, embedding, save_dir, load_filename):
-
-
+                   decoder_optimizer, embedding, save_dir, load_filename, epoch):
     #initializing
     print("Initializing ...")
     start_iteration = 1
@@ -169,26 +194,28 @@ def training_iters1(data_loader, config, voc, encoder, decoder, encoder_optimize
         start_iteration = checkpoint["iteration"] + 1
 
     # training loop
+    data_length = len(data_loader)
     for iteration, training_batch in enumerate(data_loader):
         # extract fields from batch
         input_variable, lengths, target_variable, mask, max_target_length = training_batch
 
         #run a training iteration
         loss = train(config,
+                     voc.bos_id,
                      input_variable,
                      lengths,
                      target_variable,
                      mask, max_target_length,
                      encoder, decoder, embedding,
-                     encoder_optimizer, decoder_optimizer, save_dir)
+                     encoder_optimizer, decoder_optimizer)
 
         print_loss += loss
 
         # print progress
         if iteration % config.print_every == 0:
             print_loss_avg = print_loss / config.print_every
-            print("Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(iteration,
-                                                                                          iteration / config.n_iterations * 100,
+            print("Epoch:{}; Iteration: {}; Percent complete: {:.1f}%; Average loss: {:.4f}".format(epoch, iteration,
+                                                                                          iteration / data_length * 100,
                                                                                           print_loss_avg))
             print_loss = 0
 

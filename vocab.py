@@ -3,24 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import torch
-from torch.jit import script, trace
-import torch.nn as nn
-from torch import optim
-import torch.nn.functional as F
-import csv
-import random
-import re
-import os
-import unicodedata
-import codecs
-from io import open
-import math
-
-# Default word tokens
-PAD_token = 0  # Used for padding short sentences
-SOS_token = 1  # Start-of-sentence token
-EOS_token = 2  # End-of-sentence token
 
 
 class Vocabulary():
@@ -28,10 +10,28 @@ class Vocabulary():
     def __init__(self, name):
         self.name = name
         self.trimmed = False
+
+        # Default word tokens
+        self.pad_id = 0  # Used for padding short sentences
+        self.bos_id = 1  # Start-of-sentence token
+        self.eos_id = 2  # End-of-sentence token
+
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {PAD_token: "PAD", SOS_token: "SOS", EOS_token: "EOS"}
+        self.index2word = {self.pad_id: "PAD", self.bos_id: "SOS", self.eos_id: "EOS"}
         self.num_words = 3  # the 3 basic ones
+
+    # @property
+    # def bos_id(self):
+    #     return self.bos_id
+    #
+    # @property
+    # def eos_id(self):
+    #     return self.eos_id
+    #
+    # @property
+    # def pad_id(self):
+    #     return self.pad_id
 
     def add_sentence(self, sentence):
         for word in sentence.split(' '):
@@ -62,7 +62,7 @@ class Vocabulary():
         # reinitialize dictionaries
         self.word2index = {}
         self.word2count = {}
-        self.index2word = {PAD_token: "PAD", SOS_token: "SOS", EOS_token: "EOS"}
+        self.index2word = {self.pad_id: "PAD", self.bos_id: "SOS", self.eos_id: "EOS"}
         self.num_words = 3
 
         for word in keep_words:

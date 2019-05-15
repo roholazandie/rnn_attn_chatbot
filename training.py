@@ -50,7 +50,7 @@ def train(config, vocab, input_variable, lengths, target_variable, mask, max_tar
     use_teacher_forcing = True if random.random() < config.teacher_forcing_ratio else False
 
     # forward batch of sequences through decoder one time iteraion
-    outputs = Variable(torch.zeros(max_target_len, config.batch_size, len(vocab))).cuda()
+    outputs = Variable(torch.zeros(max_target_len, config.batch_size, len(vocab))).to(config.device)
     if use_teacher_forcing:
         for t in range(max_target_len):
             decoder_outputs, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)

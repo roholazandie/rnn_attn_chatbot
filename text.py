@@ -173,4 +173,6 @@ class BPEVocab:
     def ids2string(self, ids):
         bpe_tokens = [self.id2token[id] for id in ids]
 
-        return ''.join(bpe_tokens).replace(BPEVocab.we, ' ')
+        return ''.join(bpe_tokens).replace(BPEVocab.we, ' ').\
+            replace(BPEVocab.eos_token, '').\
+            replace(BPEVocab.bos_token, '').replace(BPEVocab.pad_token, '')

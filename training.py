@@ -3,10 +3,10 @@ import random
 import os
 from cornell_movie_dialog_dataset import CornellMovieDialogDataset
 from prepare_data import PrepareDataForModel
-
-#MAX_LENGTH = 10
-#SOS_token = 1
-
+from torch.autograd import Variable
+from torch.nn import functional as F
+from torch.nn.utils import clip_grad_norm_
+from loss import compute_loss
 
 def masked_NLL_loss(inp, target, mask):
     n_total = mask.sum()
@@ -14,8 +14,10 @@ def masked_NLL_loss(inp, target, mask):
     loss = cross_entropy.masked_select(mask).mean()
     return loss, n_total.item()
 
+def batched_masked_nll_loss(logits, target, mask):
+    pass
 
-def train(config, bos_id, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
+def train(config, vocab, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
           encoder_optimizer, decoder_optimizer):
 
     # zeros gradients
@@ -37,7 +39,7 @@ def train(config, bos_id, input_variable, lengths, target_variable, mask, max_ta
     encoder_outputs, encoder_hidden = encoder(input_variable, lengths)
 
     #create initial decoder inputs
-    decoder_input = torch.LongTensor([bos_id for _ in range(config.batch_size)])
+    decoder_input = torch.LongTensor([vocab.bos_id for _ in range(config.batch_size)])
     decoder_input = decoder_input.unsqueeze(0)
     decoder_input = decoder_input.to(config.device)
 
@@ -48,44 +50,73 @@ def train(config, bos_id, input_variable, lengths, target_variable, mask, max_ta
     use_teacher_forcing = True if random.random() < config.teacher_forcing_ratio else False
 
     # forward batch of sequences through decoder one time iteraion
-
+    outputs = Variable(torch.zeros(max_target_len, config.batch_size, len(vocab))).cuda()
     if use_teacher_forcing:
         for t in range(max_target_len):
             decoder_outputs, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
             # teacher forcing: next input is current target
             decoder_input = target_variable[t].view(1, -1)
-            # calculate and accumulate loss
-            masked_loss, n_total = masked_NLL_loss(decoder_outputs, target_variable[t], mask[t])
-            loss += masked_loss
-            print_losses.append(masked_loss.item() * n_total)
+            outputs[t] = decoder_outputs
+
+            #masked_loss = F.cross_entropy(decoder_outputs, target_variable[t], ignore_index=vocab.pad_id)
+            n_total = mask[t].sum()
+            #masked_loss, n_total = masked_NLL_loss(decoder_outputs, target_variable[t], mask[t])
+            #print("cross entropy ", masked_loss.item())
+            #print("nll ", masked_loss2.item())
+
+            #loss += masked_loss
+
+            # if torch.abs(masked_loss - masked_loss2).item() > 1:
+                #print("wrong")
+            #outputs.permute(1,0,2).contiguous().view(-1,outputs.shape[-1])
+            #target_variable.permute(1,0).contiguous().view(-1,1)
+
+            #print_losses.append(masked_loss.item() * n_total)
             n_totals += n_total
     else:
         for t in range(max_target_len):
             decoder_outputs, decoder_hidden = decoder(decoder_input, decoder_hidden, encoder_outputs)
             # no teacher forcing: next input is decoder's current output
             _, topi = decoder_outputs.topk(1)
-            decoder_input = torch.LongTensor([topi[i][0] for i in range(config.batch_size)])
-            decoder_input = decoder_input.to(config.device)
+            decoder_input = torch.LongTensor([topi[i][0] for i in range(config.batch_size)]).to(config.device)
+            outputs[t] = decoder_outputs
 
-            # calculate and accumulate loss
-            masked_loss, n_total = masked_NLL_loss(decoder_outputs, target_variable[t], mask[t])
+
+            masked_loss = F.cross_entropy(decoder_outputs, target_variable[t], ignore_index=vocab.pad_id)
+            n_total = mask[t].sum()
+            #masked_loss, n_total = masked_NLL_loss(decoder_outputs, target_variable[t], mask[t])
             loss += masked_loss
-            print_losses.append(masked_loss.item()*n_total)
+
+            # # calculate and accumulate loss
+
+            print_losses.append(masked_loss.item() * n_total)
             n_totals += n_total
 
+    # calculate loss
+    #masked_loss, n_total = masked_NLL_loss(outputs, target_variable, mask)
 
-    # perform backprob
+    # loss = F.cross_entropy(outputs[1:].permute(1, 0, 2).contiguous().view(-1, len(vocab)),
+    #                        target_variable[1:].permute(1, 0).contiguous().view(-1), ignore_index=vocab.pad_id)
+    #
+
+    #torch.gather(outputs.view(-1,outputs.shape[-1]), 1, target_variable.view(-1,1))
+    #-torch.log(torch.gather(outputs.view(-1,outputs.shape[-1]), 1, target_variable.view(-1,1)).squeeze(1))
+    cross_entropy = -torch.log(torch.gather(outputs.view(-1, outputs.shape[-1]), 1, target_variable.view(-1, 1)).squeeze(1)).reshape(-1, config.batch_size)
+    loss = cross_entropy.masked_select(mask).mean()
     loss.backward()
 
+
     # clip gradients: gradients are clipped in place
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), config.clip)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), config.clip)
+    clip_grad_norm_(encoder.parameters(), config.clip)
+    clip_grad_norm_(decoder.parameters(), config.clip)
 
     # adjust model weights
     encoder_optimizer.step()
     decoder_optimizer.step()
 
-    return sum(print_losses)/n_totals
+    loss_value = loss.item()
+
+    return loss_value#sum(print_losses)/n_totals
 
 
 
@@ -145,7 +176,7 @@ def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
 
         #run a training iteration
         loss = train(config,
-                     voc.bos_id,
+                     voc,
                      input_variable,
                      lengths,
                      target_variable,
@@ -201,7 +232,7 @@ def training_iters1(data_loader, config, voc, encoder, decoder, encoder_optimize
 
         #run a training iteration
         loss = train(config,
-                     voc.bos_id,
+                     voc,
                      input_variable,
                      lengths,
                      target_variable,

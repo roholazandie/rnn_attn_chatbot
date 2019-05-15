@@ -106,7 +106,11 @@ def run_training1(corpus_dir, save_dir, datafile, config_file, load_filename="")
     #datafile = "/home/rohola/codes/rnn_attn_chatbot/cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
 
     dataset = CornellMovieDialogDataset(config, paths=[datafile], vocab=vocab, max_lengths=0)
-    data_loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=True, collate_fn=dataset.collate_func)
+    data_loader = DataLoader(dataset,
+                             batch_size=config.batch_size,
+                             shuffle=True,
+                             collate_fn=dataset.collate_func,
+                             drop_last=True)
 
     num_tokens = len(vocab)
 

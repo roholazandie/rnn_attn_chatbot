@@ -1,4 +1,4 @@
-from evaluate import evaluate_input
+from evaluate import evaluate_input, evaluate_input1
 from greedy_search_decoder import GreedySearchDecoder
 import torch
 from torch import nn, optim
@@ -62,7 +62,6 @@ def run_evaluation(corpus_dir, save_dir, datafile, config_file):
 
 def run_evaluation1(corpus_dir, save_dir, datafile, config_file):
     config = Config.from_json_file(config_file)
-    vocab = Vocabulary("words")
 
     # set checkpoint to load from; set to None if starting from scratch
     load_filename = os.path.join(save_dir, config.model_name, config.corpus_name,
@@ -84,13 +83,13 @@ def run_evaluation1(corpus_dir, save_dir, datafile, config_file):
     vocab = BPEVocab.from_files(config.bpe_vocab_path, config.bpe_codes_path)
     print("Building encoder and decoder ...")
     # initialize word embeddings
-    embedding = nn.Embedding(vocab.num_words, config.hidden_size)
+    embedding = nn.Embedding(len(vocab), config.hidden_size)
     embedding.load_state_dict(embedding_sd)
 
     # initialize encoder and decoder models
     encoder = EncoderRNN(config.hidden_size, embedding, config.encoder_n_layers, config.dropout)
     decoder = LuongAttnDecoderRNN(config.attn_model, embedding, config.hidden_size,
-                                  vocab.num_words, config.decoder_n_layers, config.dropout)
+                                  len(vocab), config.decoder_n_layers, config.dropout)
 
     encoder.load_state_dict(encoder_sd)
     decoder.load_state_dict(decoder_sd)
@@ -104,13 +103,13 @@ def run_evaluation1(corpus_dir, save_dir, datafile, config_file):
     searcher = GreedySearchDecoder(encoder, decoder)
 
     # Begin chatting (uncomment and run the following line to begin)
-    evaluate_input(encoder, decoder, searcher, vocab)
+    evaluate_input1(encoder, decoder, searcher, vocab)
 
 
 if __name__ == "__main__":
-    fire.Fire()
-    # corpus_dir = "cornell_movie_dialogs_corpus"
-    # save_dir = "cornell_movie_dialogs_corpus/save"
-    # datafile = "cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
-    # config_file = "config.json"
-    # run_evaluation(corpus_dir, save_dir, datafile, config_file)
+    #fire.Fire()
+    corpus_dir = "cornell_movie_dialogs_corpus"
+    save_dir = "cornell_movie_dialogs_corpus/save"
+    datafile = "cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
+    config_file = "config.json"
+    run_evaluation1(corpus_dir, save_dir, datafile, config_file)

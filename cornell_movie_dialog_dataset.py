@@ -25,7 +25,6 @@ class CornellMovieDialogDataset(Dataset):
             chat1_ids = vocab.string2ids(chat[0])
             chat2_ids = vocab.string2ids(chat[1])
             dataset.append((chat1_ids, chat2_ids))
-
         return dataset
 
     def __len__(self):

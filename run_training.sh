@@ -1,0 +1,1 @@
+python run_model.py run_training1 --corpus-dir ./cornell_movie_dialogs_corpus --save-dir ./cornell_movie_dialogs_corpus/save --datafile ./cornell_movie_dialogs_corpus/formatted_movie_lines.txt --config-file config.json

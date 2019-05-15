@@ -149,3 +149,4 @@ fabric.properties
 data/*
 cornell_movie_dialogs_corpus/*
 .idea/*
+config.json

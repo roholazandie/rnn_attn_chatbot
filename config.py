@@ -24,6 +24,9 @@ class Config(object):
                  corpus_name="",
                  bpe_codes_path="",
                  bpe_vocab_path="",
+                 save_dir="",
+                 corpus_dir="",
+                 datafile="",
                  MAX_LENGTH=10,
                  MIN_COUNT=3,
                  device="cpu"
@@ -48,6 +51,9 @@ class Config(object):
         self.corpus_name = corpus_name
         self.bpe_codes_path = bpe_codes_path
         self.bpe_vocab_path = bpe_vocab_path
+        self.save_dir = save_dir
+        self.corpus_dir = corpus_dir
+        self.datafile = datafile,
         self.MAX_LENGTH = MAX_LENGTH
         self.MIN_COUNT = MIN_COUNT
         self.device = device

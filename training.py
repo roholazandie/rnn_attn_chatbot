@@ -266,7 +266,7 @@ def training_iters1(data_loader, config, voc, encoder, decoder, encoder_optimize
                         "loss": loss,
                         "voc_dict": voc.__dict__,
                         "embedding": embedding.state_dict()},
-                       os.path.join(directory, '{}_{}.tar'.format(iteration, 'checkpoint')))
+                       os.path.join(directory, 'last_checkpoint.tar'))
 
 
 

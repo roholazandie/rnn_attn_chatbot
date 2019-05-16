@@ -62,7 +62,7 @@ def run_evaluation(corpus_dir, save_dir, datafile, config_file):
 
 def run_evaluation1(corpus_dir, save_dir, datafile, config_file):
     config = Config.from_json_file(config_file)
-
+    save_dir = config.save_dir
     # set checkpoint to load from; set to None if starting from scratch
     load_filename = os.path.join(save_dir, config.model_name, config.corpus_name,
                                  '{}-{}_{}'.format(config.encoder_n_layers,

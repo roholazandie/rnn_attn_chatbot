@@ -82,9 +82,11 @@ def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
 
 
 
-def run_training1(corpus_dir, save_dir, datafile, config_file, load_filename=""):
+def run_training1(config_file, load_filename=""):
     # read data
     config = Config.from_json_file(config_file)
+    save_dir = config.save_dir
+    datafile = config.datafile
     # prepare_data = PrepareData(min_count=config.MIN_COUNT, max_length=config.MAX_LENGTH)
     # vocab, pairs = prepare_data.load_prepare_data(corpus_dir, datafile, save_dir)
 

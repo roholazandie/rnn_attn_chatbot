@@ -120,37 +120,6 @@ def train(config, vocab, input_variable, lengths, target_variable, mask, max_tar
 
 
 
-
-def train1(config, bos_id, input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding,
-          encoder_optimizer, decoder_optimizer):
-
-    # zeros gradients
-    encoder_optimizer.zero_grad()
-    decoder_optimizer.zero_grad()
-
-
-    # initialize variables
-    loss = 0
-    print_losses = []
-    n_totals = 0
-
-
-
-
-    # perform backprob
-    loss.backward()
-
-    # clip gradients: gradients are clipped in place
-    torch.nn.utils.clip_grad_norm_(encoder.parameters(), config.clip)
-    torch.nn.utils.clip_grad_norm_(decoder.parameters(), config.clip)
-
-    # adjust model weights
-    encoder_optimizer.step()
-    decoder_optimizer.step()
-
-    return sum(print_losses)/n_totals
-
-
 def training_iters(config, voc, pairs, encoder, decoder, encoder_optimizer,
                    decoder_optimizer, embedding, save_dir, load_filename):
 

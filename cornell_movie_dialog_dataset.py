@@ -6,9 +6,8 @@ from prepare_data import PrepareData
 
 class CornellMovieDialogDataset(Dataset):
 
-    def __init__(self, config, paths, vocab, max_lengths):
+    def __init__(self, config, paths, vocab):
         self.vocab = vocab
-        self.max_lengths = max_lengths
 
         if isinstance(paths, str):
             paths = [paths]
@@ -33,15 +32,10 @@ class CornellMovieDialogDataset(Dataset):
     def __getitem__(self, idx):
         chat_ids = self.data[idx]
 
-        pairs = []
-        #for i, chat_ids in enumerate(chats):
         ids0 = [self.vocab.bos_id] + chat_ids[0] + [self.vocab.eos_id]
         ids1 = [self.vocab.bos_id] + chat_ids[1] + [self.vocab.eos_id]
 
-        #pairs.append((ids0, ids1))
-
         return (ids0, ids1)
-
 
     def collate_func(self, pair_batch):
         def zero_padding(l, fillvalue=self.vocab.pad_id):
@@ -63,7 +57,7 @@ class CornellMovieDialogDataset(Dataset):
         # Returns padded input sequence tensor and lengths
         def input_var(ids_batch):
             lengths = torch.tensor([len(indexes) for indexes in ids_batch])
-            pad_list = zero_padding(ids_batch)
+            pad_list = zero_padding(ids_batch, fillvalue=self.vocab.pad_id)
             pad_var = torch.LongTensor(pad_list)
             return pad_var, lengths
 
@@ -74,7 +68,7 @@ class CornellMovieDialogDataset(Dataset):
             mask = torch.ByteTensor(mask)
             pad_var = torch.LongTensor(pad_list)
             return pad_var, mask, max_target_length
-
+        #todo why we do need this sort?
         pair_batch.sort(key=lambda x: len(x[0]), reverse=True)
         input_batch, output_batch = [], []
 

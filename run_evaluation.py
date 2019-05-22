@@ -68,10 +68,11 @@ def run_evaluation1(corpus_dir, save_dir, datafile, config_file):
                                  '{}-{}_{}'.format(config.encoder_n_layers,
                                                    config.decoder_n_layers,
                                                    config.hidden_size),
-                                 '{}_checkpoint.tar'.format(config.checkpoint_iter))
+                                 "last_checkpoint.tar")
+
 
     # if loading on the same machine the model trained on
-    checkpoint = torch.load(load_filename)
+    checkpoint = torch.load(load_filename, map_location=lambda storage, loc: storage)
     # if loading a model trained on gpu to cpu
     # checkpoint = torch.load(load_filename, map_location=torch.device('cpu'))
     encoder_sd = checkpoint["en"]

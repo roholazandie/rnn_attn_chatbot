@@ -18,12 +18,14 @@ import fire
 # attn_model = 'concat'
 
 
-def run_training(corpus_dir, save_dir, datafile, config_file, load_filename=""):
+def run_training(config_file, load_filename=""):
     # read data
-    # corpus_dir = "cornell_movie_dialogs_corpus"
-    # save_dir = os.path.join(corpus_dir, "save")
-    # datafile = os.path.join(corpus_dir, "formatted_movie_lines.txt")
+
     config = Config.from_json_file(config_file)
+    save_dir = config.save_dir
+    datafile = config.datafile
+    corpus_dir = config.corpus_dir
+
     prepare_data = PrepareData(min_count=config.MIN_COUNT, max_length=config.MAX_LENGTH)
     vocab, pairs = prepare_data.load_prepare_data(corpus_dir, datafile, save_dir)
 
@@ -87,8 +89,8 @@ def run_training1(config_file, load_filename=""):
     config = Config.from_json_file(config_file)
     save_dir = config.save_dir
     datafile = config.datafile
-    # prepare_data = PrepareData(min_count=config.MIN_COUNT, max_length=config.MAX_LENGTH)
-    # vocab, pairs = prepare_data.load_prepare_data(corpus_dir, datafile, save_dir)
+
+    vocab = BPEVocab.from_files(config.bpe_vocab_path, config.bpe_codes_path)
 
     if load_filename:
         # if loading on the same machine the model trained on
@@ -102,12 +104,9 @@ def run_training1(config_file, load_filename=""):
         embedding_sd = checkpoint["embedding"]
         vocab.__dict__ = checkpoint["voc_dict"]
 
-
-    vocab = BPEVocab.from_files(config.bpe_vocab_path, config.bpe_codes_path)
-
-    #datafile = "/home/rohola/codes/rnn_attn_chatbot/cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
-
-    dataset = CornellMovieDialogDataset(config, paths=[datafile], vocab=vocab, max_lengths=0)
+    dataset = CornellMovieDialogDataset(config, paths=[datafile], vocab=vocab)
+    #todo try shuffle=False
+    #todo the batched input tensor to the model is transosed! is there anything wrong?
     data_loader = DataLoader(dataset,
                              batch_size=config.batch_size,
                              shuffle=True,

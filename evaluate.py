@@ -2,7 +2,7 @@ import torch
 
 from prepare_data import PrepareDataForModel
 
-MAX_LENGTH = 10
+MAX_LENGTH = 20
 device = "cpu"
 
 def evaluate(encoder, decoder, searcher, vocab, sentence, max_length=MAX_LENGTH):
@@ -50,9 +50,9 @@ def evaluate_input(encoder, decoder, searcher, vocab):
                 break
 
             # normalize sentence
-            output_words = evaluate1(encoder, decoder, searcher, vocab, input_sentence)
+            output_words = evaluate(encoder, decoder, searcher, vocab, input_sentence)
             # format and print the response
-            output_words[:] = [x for x in output_words if not (x=="EOS" or x=="SOS")]
+            output_words[:] = [x for x in output_words if not (x == "EOS" or x == "SOS")]
             print(" ".join(output_words))
 
         except KeyError:

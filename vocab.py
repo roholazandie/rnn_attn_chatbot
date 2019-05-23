@@ -33,6 +33,9 @@ class Vocabulary():
     # def pad_id(self):
     #     return self.pad_id
 
+    def __len__(self):
+        return self.num_words
+
     def add_sentence(self, sentence):
         for word in sentence.split(' '):
             self.add_word(word)

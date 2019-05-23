@@ -22,7 +22,7 @@ def run_evaluation(corpus_dir, save_dir, datafile, config_file):
     load_filename = os.path.join(save_dir, config.model_name, config.corpus_name, '{}-{}_{}'.format(config.encoder_n_layers,
                                                                                       config.decoder_n_layers,
                                                                                       config.hidden_size),
-                               '{}_checkpoint.tar'.format(config.checkpoint_iter))
+                               'last_checkpoint.tar')
 
     # if loading on the same machine the model trained on
     checkpoint = torch.load(load_filename)
@@ -114,3 +114,4 @@ if __name__ == "__main__":
     datafile = "cornell_movie_dialogs_corpus/formatted_movie_lines.txt"
     config_file = "config.json"
     run_evaluation1(corpus_dir, save_dir, datafile, config_file)
+    #run_evaluation(corpus_dir, save_dir, datafile, config_file)

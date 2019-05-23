@@ -44,7 +44,6 @@ class PrepareData():
     # read query/response pairs and return a voc object
     def read_vocabs(self, datafile, corpus_name):
         lines = open(datafile, encoding="utf-8").read().strip().split('\n')
-        lines = lines[:50]
 
         pairs = [[self.normalize_string(s) for s in line.split('\t')] for line in lines]
         vocab = Vocabulary(corpus_name)
@@ -68,7 +67,7 @@ class PrepareData():
 
             pairs.append((sentences0, sentences1))
             # i+=1
-            # if i>10:
+            # if i>100:
             #     break
 
         return pairs
@@ -117,7 +116,7 @@ class PrepareData():
             vocab.add_sentence(pair[0])
             vocab.add_sentence(pair[1])
 
-        #pairs = self.trim_rare_words(vocab, pairs)
+        pairs = self.trim_rare_words(vocab, pairs)
 
         return vocab, pairs
 
